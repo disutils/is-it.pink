@@ -35,8 +35,13 @@ function checkIfPink(color) {
     let { r, g, b } = hexToRgb(color);
     let { h, s, l } = rgbToHsl(r, g, b);
 
-    return (h >= 300 && h <= 345) && s > 40 && l > 40 && l < 80;
+    return (
+        ((h >= 290 && h <= 360) || (h >= 0 && h <= 20)) && // Wider pink hue range
+        s > 20 &&  // Allow more desaturated pinks
+        l > 30 && l < 90  // Accept lighter and darker pinks
+    );
 }
+
 
 
 function getRandomColor() {
