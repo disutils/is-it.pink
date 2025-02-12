@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= name %></title>
+
+    <meta property="og:title" content="<%= name %>">
+    <meta property="og:description" content="A fun game to guess if the color is pink or not.">
+    <meta property="og:image" content="/img/pink.jpg">
+    <meta property="og:url" content="/">
+
+    <meta property="title" content="<%= name %>">
+    <meta property="description" content="A fun game to guess if the color is pink or not.">
+    <meta property="theme-color" content="#FFC0CB">
+    <link rel="icon" href="/img/pink.jpg">
+
+    <meta name="author" content="Disutils Team">
+    <meta name="keywords" content="color game, pink, fun, guessing game">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+        }
+
+        .color-box {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+        }
+
+        .btn-group .btn {
+            border-radius: 20px;
+        }
+
+        .custom-range {
+            width: 100%;
+        }
+
+        .btn-primary, .btn-info {
+            background-color: #007bff;
+            border: none;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            border: none;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border: none;
+        }
+
+        #scoreboard {
+            color: white;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: auto;
+            padding: 10px 20px;
+            color: white;
+            text-align: center;
+            font-size: 1rem;
+            display: none;
+            z-index: 1050;
+            border-radius: 5px;
+            border-bottom: 2px solid #ccc;
+            max-width: 300px;
+        }
+
+        .new-game-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #newGameButton {
+            margin-left: auto;
+        }
+
+        .content-wrapper {
+            margin-top: 150px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="mt-4 new-game-wrapper d-flex justify-content-between align-items-center">
+        <div class="col-md-6">
+            <h3 id="scoreboard" class="text-left">Score: 0</h3>
+        </div>
+        <div class="col-md-6 d-flex justify-content-end">
+            <button id="newGameButton" class="btn btn-info me-2" onclick="newGame()">New Game</button>
+            <a href="https://github.com/disutils/is-it.pink" class="btn btn-info" target="_blank">GitHub</a>
+        </div>
+    </div>
+</div>
+
+<div class="container content-wrapper">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <div class="color-box mb-4" style="background-color: <%= color %>;"></div>
+            <div class="btn-group mb-4">
+                <button class="btn btn-success" onclick="makeGuess('yes')">Yes, it is pink</button>
+                <button class="btn btn-danger" onclick="makeGuess('no')">No, it is not</button>
+            </div>
+            <div class="mt-4">
+                <input type="range" min="0" max="360" value="0" id="hueSlider" class="custom-range" onchange="applyHueRotation()">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="notification" class="notification"></div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let score = 0;
+    let currentColor = '<%= color %>';
+
+    function rgbToHex(rgb) {
+        let result = rgb.match(/\d+/g);
+        if (!result || result.length < 3) return null;
+        return "#" + result.slice(0, 3).map(x => {
+            let hex = parseInt(x).toString(16);
+            return hex.length === 1 ? "0" + hex : hex;
+        }).join("").toUpperCase();
+    }
+
+    function makeGuess(guess) {
+        let colorBox = document.querySelector('.color-box');
+
+        let canvas = document.createElement('canvas');
+        let ctx = canvas.getContext('2d');
+        canvas.width = colorBox.clientWidth;
+        canvas.height = colorBox.clientHeight;
+
+        ctx.filter = getComputedStyle(colorBox).filter;
+        ctx.fillStyle = getComputedStyle(colorBox).backgroundColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        let imageData = ctx.getImageData(canvas.width / 2, canvas.height / 2, 1, 1).data;
+        let hexColor = rgbToHex(`rgb(${imageData[0]}, ${imageData[1]}, ${imageData[2]})`);
+
+        fetch('/guess', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ guess, color: hexColor })
+        })
+            .then(response => response.json())
+            .then(data => {
+                let resultText = data.message;
+
+                let containerDiv = document.getElementById('resultContainer');
+                if (!containerDiv) {
+                    containerDiv = document.createElement('div');
+                    containerDiv.id = 'resultContainer';
+                    containerDiv.style.position = 'fixed';
+                    containerDiv.style.bottom = '10px';
+                    containerDiv.style.left = '10px';
+                    containerDiv.style.backgroundColor = '#333';
+                    containerDiv.style.padding = '10px';
+                    containerDiv.style.borderRadius = '8px';
+                    containerDiv.style.color = 'white';
+                    containerDiv.style.textAlign = 'center';
+                    document.body.appendChild(containerDiv);
+                } else {
+                    containerDiv.innerHTML = '';
+                }
+
+                let label = document.createElement('div');
+                label.textContent = `Last Color: ${resultText}`;
+                label.style.marginBottom = '5px';
+
+                let testDiv = document.createElement('div');
+                testDiv.style.width = '50px';
+                testDiv.style.height = '50px';
+                testDiv.style.backgroundColor = hexColor;
+                testDiv.style.border = '2px solid white';
+
+                containerDiv.appendChild(label);
+                containerDiv.appendChild(testDiv);
+
+                if (data.result && data.isPink) {
+                    updateScore(1);
+                    showNotification('Correct!', 'success');
+                } else if (!data.result && data.isPink) {
+                    updateScore(-1);
+                    showNotification('Wrong! Try again!', 'error');
+                } else if (!data.result) {
+                    updateScore(-1);
+                    showNotification('Wrong! Try again!', 'error');
+                } else if (!data.isPink) {
+                    showNotification('Correct, try to make it pink!', 'info');
+                }
+                newColor();
+            });
+    }
+
+
+    function updateScore(points) {
+        score += points;
+        document.getElementById('scoreboard').textContent = `Score: ${score}`;
+    }
+
+    function newGame() {
+        score = 0;
+        document.getElementById('scoreboard').textContent = `Score: ${score}`;
+
+        let containerDiv = document.getElementById('resultContainer');
+        if (containerDiv) {
+            containerDiv.remove();
+        }
+
+        let notificationElement = document.getElementById('notification');
+        if (notificationElement) {
+            notificationElement.style.display = 'none';
+        }
+
+        newColor();
+    }
+
+    function newColor() {
+        fetch('/newColor')
+            .then(response => response.json())
+            .then(data => {
+                currentColor = data.color;
+                document.querySelector('.color-box').style.backgroundColor = currentColor;
+                document.querySelector('.color-box').style.filter = 'none';
+            });
+    }
+
+    function applyHueRotation() {
+        const hueValue = document.getElementById('hueSlider').value;
+        document.querySelector('.color-box').style.filter = `hue-rotate(${hueValue}deg)`;
+    }
+
+    function showNotification(message, type) {
+        const notificationElement = document.getElementById('notification');
+        notificationElement.textContent = message;
+
+        if (type === 'success') {
+            notificationElement.style.backgroundColor = '#28a745';
+            notificationElement.innerHTML = `<span style="font-size: 1.5rem;">😁</span> ${message}`;
+        } else if (type === 'error') {
+            notificationElement.style.backgroundColor = '#dc3545';
+            notificationElement.innerHTML = `<span style="font-size: 1.5rem;">😞</span> ${message}`;
+        } else if (type === 'info') {
+            notificationElement.style.backgroundColor = '#17a2b8';
+            notificationElement.innerHTML = `<span style="font-size: 1.5rem;">😐</span> ${message}`;
+        }
+
+        notificationElement.style.display = 'block';
+
+        setTimeout(() => {
+            notificationElement.style.display = 'none';
+        }, 3000);
+    }
+
+</script>
+</body>
+</html>

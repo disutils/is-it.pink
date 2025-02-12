@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= name %></title>
+
+    <meta property="og:title" content="<%= name %>">
+    <meta property="og:description" content="Seems like you are lost...">
+    <meta property="og:image" content="/img/Distools.jpg">
+    <meta property="og:url" content="/">
+
+    <meta name="title" content="<%= name %>">
+    <meta name="description" content="Seems like you are lost...">
+    <meta name="theme-color" content="#ff0000">
+    <link rel="icon" href="/img/pink.jpg" type="image/png">
+
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v6.0.0-beta3/css/all.css"
+          ntegrity="sha512-YWzhKL2whUzgiheMoBFwW8CKV4qpHQAEuvilg9FAn5VJUDwKZZxkJNuGM4XkWuk94WCrrwslk8yWNGmY1EduTA=="
+          crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.4/flowbite.min.css" rel="stylesheet" />
+    <link rel='stylesheet' href="/css/style.css">
+
+    <script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            twemoji.parse(document.body, {
+                base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/',
+                folder: 'svg',
+                ext: '.svg'
+            });
+        });
+    </script>
+</head>
+
+<body class="max-w-10xl mx-auto">
+<div class="flex flex-col items-center justify-center h-screen">
+    <div class="text-center">
+        <img src="<%= imgPath %>" alt="Error Illustration" class="mb-8 mx-auto" style="max-width: 300px; max-height: 300px;">
+        <h2 class="text-4xl font-bold text-red-600 mb-4"><%= status %></h2>
+        <p class="text-lg text-white mb-8">
+            <% if (status === 400) { %>
+                Oops! It looks like your request was a bit off. Maybe try turning it off and on again?
+            <% } else if (status === 401) { %>
+                Unauthorized! You shall not pass... unless you have the right credentials.
+            <% } else if (status === 403) { %>
+                Forbidden! You don't have permission to access this page. Maybe try bribing the admin?
+            <% } else if (status === 404) { %>
+                Seems like you are lost... or maybe the page is real and you are in the Matrix...
+            <% } else if (status === 500) { %>
+                Oops! Something went wrong on our end. Our engineers are probably already fixing it... or having coffee.
+            <% } else { %>
+                An error occurred... but we are not sure what it is. Maybe try again later?
+            <% } %>
+        </p>
+    </div>
+</div>
+
+<script>
+    function performSearch() {
+        var query = document.getElementById('searchInput').value.toLowerCase().replace(/^\//, '');
+        window.location.href = '/' + query;
+    }
+
+    document.getElementById('searchButton').addEventListener('click', performSearch);
+
+    document.getElementById('searchInput').addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            performSearch();
+        }
+    });
+</script>
+</body>
+</html>
